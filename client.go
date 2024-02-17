@@ -10,8 +10,10 @@ func main() {
 }
 
 func connectToServer() {
+	remote := "192.168.178.70:8080"
+
 	//establish connection
-	connection, err := net.Dial("tcp", ":8080")
+	connection, err := net.Dial("tcp", remote)
 	if err != nil {
 		panic(err)
 	}
