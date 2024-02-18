@@ -10,7 +10,7 @@ func main() {
 	ip := GetOutboundIP()
 	fmt.Println(ip)
 	fmt.Println("Server Running...")
-	ln, err := net.Listen("tcp", ":8080")
+	ln, err := net.Listen("tcp", ":8081")
 	if err != nil {
 		fmt.Println("Error listening:", err.Error())
 

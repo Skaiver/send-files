@@ -1,25 +1,73 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"net"
 	"os"
-	// "strconv"
-	// "bufio"
+	"strconv"
+	"time"
+)
+
+const (
+	PORT = "8081"
 )
 
 func main() {
-	connectToServer()
+	// identify hosts in network
+	server := listAvailableServers()
+
+	connectToServer(server)
+}
+
+func GetOutboundIP() net.IP {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+
+	return localAddr.IP
+}
+
+func listAvailableServers() string {
+	// send requests to all hosts with application port
+	// assuming last byte octet is host part: 192.168.178.XXX
+	ip := "192.168.178."
+
+	fmt.Println("Available Servers: ")
+
+	for i := 0; i < 255; i++ {
+		fullIp := ip + strconv.Itoa(i)
+
+		// check if server is acutally there before try to resolve
+		timeout := 1 * time.Millisecond
+		conn, err := net.DialTimeout("tcp", fullIp+":"+PORT, timeout)
+		if err != nil {
+			// log.Println("Site unreachable, error: ", err)
+			continue
+		}
+		defer conn.Close()
+
+		fmt.Println("IP: " + fullIp + ":" + PORT)
+	}
+
+	systemIp := GetOutboundIP()
+	fmt.Println("Your IP: ", systemIp.String())
+	fmt.Print("insert last octet of server: ")
+	input := bufio.NewScanner(os.Stdin)
+	input.Scan()
+	fmt.Println(input.Text())
+
+	return input.Text()
 }
 
 func getTarget() string {
 	var in *os.File
 	var err error
-
-	// flag solution
-	// arg0 := flag.String("file", "", "enter a file path")
-	// flag.Parse()
 
 	arg0 := os.Args[1:][0]
 
@@ -48,9 +96,9 @@ func getTarget() string {
 	return string(data)
 }
 
-func connectToServer() {
-	remote := "192.168.178.70:8080"
-
+func connectToServer(server string) {
+	remote := "192.168.178." + server + ":" + PORT
+	fmt.Println("aiafgnig", remote)
 	//establish connection
 	connection, err := net.Dial("tcp", remote)
 	if err != nil {
