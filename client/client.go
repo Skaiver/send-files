@@ -25,10 +25,19 @@ func ChooseServer() string {
 
 func FindRemoteServers(systemIp net.IP) [5]string {
 	var availableHosts [5]string
-	cidrAdress := getCIDRAdress()
+	// cidrAdress := getCIDRAdress()
 	counter := 0
 
-	ipNet, err := parseCIDR(cidrAdress)
+	// ipNet, err := parseCIDR(cidrAdress)
+	// if err != nil {
+	// 	fmt.Println("Error parsing CIDR:", err)
+	// 	os.Exit(1)
+	// }
+
+	fmt.Println("should be going over hosts:")
+
+	mask := "192.168.179.0/32"
+	ipNet, err := parseCIDR(mask)
 	if err != nil {
 		fmt.Println("Error parsing CIDR:", err)
 		os.Exit(1)
@@ -235,11 +244,9 @@ func parseCIDR(cidr string) (*net.IPNet, error) {
 }
 
 // IncrementIP increments an IP address.
-func incIP(ip net.IP) {
-	for j := len(ip) - 1; j >= 0; j-- {
-		ip[j]++
-		if ip[j] > 0 {
-			break
-		}
-	}
+func incIP(ip net.IP) net.IP {
+	ip = ip.To4()
+	ip[3]++
+
+	return net.ParseIP(string(ip))
 }
