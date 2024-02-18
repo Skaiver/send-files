@@ -6,7 +6,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"regexp"
 	"strconv"
 	"time"
 
@@ -17,39 +16,17 @@ const (
 	PORT = "8081"
 )
 
-func lastAddr(ipNet *net.IPNet) string { // works when the n is a prefix, otherwise...
-
-	m1 := regexp.MustCompile(`.(\d{1,3})$`)
-
-	return m1.ReplaceAllString(ipNet.IP.Mask(ipNet.Mask).String(), ".255")
-
-	// fmt.Println("Network Address:", ipNet.IP.Mask(ipNet.Mask).String())
-
-	// if ipNet.IP.To4() != nil && !ipNet.IP.IsLoopback() {
-	// 	mask := ipNet.Mask
-	// 	ip := ipNet.IP
-
-	// 	// Ermitteln der Netzwerkadresse
-	// 	network := make(net.IP, len(ip))
-	// 	for i := range ip {
-	// 		network[i] = ip[i] & mask[i]
-	// 	}
-
-	// 	// Berechnen der Broadcast-Adresse
-	// 	broadcast := make(net.IP, len(ip))
-	// 	for i := range ip {
-	// 		broadcast[i] = network[i] | ^mask[i]
-	// 	}
-	// 	return broadcast
-	// }
-
-	// fmt.Println("Error!")
-	// return ipNet.IP
-
+func ChooseServer() string {
+	fmt.Print("choose server to connect to: ")
+	input := bufio.NewScanner(os.Stdin)
+	input.Scan()
+	return input.Text()
 }
 
-func CallBroadcast(systemIp net.IP) {
+func FindRemoteServers(systemIp net.IP) [5]string {
+	var availableHosts [5]string
 	cidrAdress := getCIDRAdress()
+	counter := 0
 
 	ipNet, err := parseCIDR(cidrAdress)
 	if err != nil {
@@ -74,46 +51,13 @@ func CallBroadcast(systemIp net.IP) {
 		pinger.OnRecv = func(pkt *ping.Packet) {
 			if testIfServerIsAvailableHost(pkt.IPAddr.String()) {
 				fmt.Println("Host found:", pkt.IPAddr)
+				availableHosts[counter] = pkt.IPAddr.String()
 			}
+			counter++
 		}
 		pinger.Run()
 	}
-
-	// _, ipNet, err := net.ParseCIDR(cidrAdress)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// broadcastIp := lastAddr(ipNet)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// fmt.Println("broadcast address:", broadcastIp)
-
-	// conn, err := net.Dial("tcp", broadcastIp+":"+PORT)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// // Nachricht senden
-	// message := []byte("Hallo, Welt!")
-	// _, err = conn.Write(message)
-	// if err != nil {
-	// 	fmt.Println("Fehler beim Senden der Nachricht:", err)
-	// 	return
-	// }
-
-	// fmt.Println("Nachricht erfolgreich gesendet.")
-
-	// buffer := make([]byte, 1024)
-	// mLen, err := conn.Read(buffer)
-	// if err != nil {
-	// 	fmt.Println("Error reading:", err.Error())
-	// }
-	// fmt.Println("Received: ", string(buffer[:mLen]))
-
-	// defer conn.Close()
+	return availableHosts
 }
 
 func testIfServerIsAvailableHost(ip string) bool {
@@ -123,6 +67,9 @@ func testIfServerIsAvailableHost(ip string) bool {
 	}
 
 	_, err = conn.Write([]byte("ARE_U_A_SERVER?"))
+	if err != nil {
+		fmt.Println("Error reading:", err.Error())
+	}
 
 	buffer := make([]byte, 1024)
 	mLen, err := conn.Read(buffer)
@@ -255,7 +202,7 @@ func getTarget() string {
 	return string(data)
 }
 
-func connectToServer(server string) {
+func ConnectToServer(server string) {
 	remote := "192.168.178." + server + ":" + PORT
 	fmt.Println("aiafgnig", remote)
 	//establish connection
@@ -268,6 +215,9 @@ func connectToServer(server string) {
 
 	//send some data
 	_, err = connection.Write([]byte(content))
+	if err != nil {
+		fmt.Println("Error reading:", err.Error())
+	}
 
 	buffer := make([]byte, 1024)
 	mLen, err := connection.Read(buffer)

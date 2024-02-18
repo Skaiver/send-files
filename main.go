@@ -10,7 +10,9 @@ func main() {
 	// identify hosts in network
 	// server := listAvailableServers(systemIp)
 
-	MyClient.CallBroadcast(systemIp)
+	MyClient.FindRemoteServers(systemIp)
 
-	// connectToServer(server)
+	option := MyClient.ChooseServer()
+
+	MyClient.ConnectToServer(option)
 }
