@@ -50,6 +50,9 @@ func processClient(conn net.Conn) {
 	}
 	fmt.Println("Received: ", string(buffer[:mLen]))
 	_, err = conn.Write([]byte("Thanks! Got your message:" + string(buffer[:mLen])))
+	if err != nil {
+		fmt.Println("Error reading:", err.Error())
+	}
 	conn.Close()
 
 }
