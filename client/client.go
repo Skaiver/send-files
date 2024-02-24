@@ -8,8 +8,6 @@ import (
 	"os"
 	"strconv"
 	"time"
-
-	"github.com/go-ping/ping"
 )
 
 const (
@@ -28,43 +26,29 @@ func FindRemoteServers(systemIp net.IP) [5]string {
 	// cidrAdress := getCIDRAdress()
 	counter := 0
 
-	// ipNet, err := parseCIDR(cidrAdress)
-	// if err != nil {
-	// 	fmt.Println("Error parsing CIDR:", err)
-	// 	os.Exit(1)
-	// }
-
 	fmt.Println("should be going over hosts:")
 
-	mask := "192.168.179.0/32"
-	ipNet, err := parseCIDR(mask)
-	if err != nil {
-		fmt.Println("Error parsing CIDR:", err)
-		os.Exit(1)
-	}
+	ip := systemIp
 
 	// Iterate over IP addresses in the subnet
-	for ip := ipNet.IP.Mask(ipNet.Mask); ipNet.Contains(ip); incIP(ip) {
-		fmt.Println("testing now: ", ip)
+	for i := 0; i < 255; i++ {
+		if i == 0 {
+			ip = getStartingIp(ip)
+		} else {
+			ip = incIP(ip)
+		}
+		// fmt.Println("testing now: ", ip)
 
 		// Send ICMP Echo request (ping)
-		pinger, err := ping.NewPinger(ip.String())
-		if err != nil {
-			fmt.Println("Error creating pinger:", err)
-			continue
-		}
-		pinger.Count = 1
-		pinger.Timeout = time.Second * 1 // Adjust timeout as needed
-		pinger.SetPrivileged(true)
+		connectAttempt := raw_connect(ip.String(), PORT)
 
-		pinger.OnRecv = func(pkt *ping.Packet) {
-			if testIfServerIsAvailableHost(pkt.IPAddr.String()) {
-				fmt.Println("Host found:", pkt.IPAddr)
-				availableHosts[counter] = pkt.IPAddr.String()
+		if connectAttempt {
+			if testIfServerIsAvailableHost(ip.String()) {
+				fmt.Println("Host found:", ip.String())
+				availableHosts[counter] = ip.String()
 			}
-			counter++
 		}
-		pinger.Run()
+
 	}
 	return availableHosts
 }
@@ -245,8 +229,29 @@ func parseCIDR(cidr string) (*net.IPNet, error) {
 
 // IncrementIP increments an IP address.
 func incIP(ip net.IP) net.IP {
-	ip = ip.To4()
-	ip[3]++
+	ipTo4 := ip.To4()
+	ipTo4[3]++
 
-	return net.ParseIP(string(ip))
+	return net.ParseIP(ipTo4.String())
+}
+
+func getStartingIp(ip net.IP) net.IP {
+	ipTo4 := ip.To4()
+	ipTo4[3] = 0
+
+	return net.ParseIP(ipTo4.String())
+}
+
+func raw_connect(host string, port string) bool {
+	timeout := time.Millisecond * 10
+	conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, port), timeout)
+	if err != nil {
+		// fmt.Println("Connecting error:", err)
+	}
+	if conn != nil {
+		defer conn.Close()
+		fmt.Println("Opened", net.JoinHostPort(host, port))
+		return true
+	}
+	return false
 }
