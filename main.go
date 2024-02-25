@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"local.com/MyClient"
 )
 
@@ -10,10 +12,17 @@ func main() {
 	// identify hosts in network
 	// server := listAvailableServers(systemIp)
 
+	// create buffered channel to push all remote server to
+	var serversChannel = make(chan string)
 
-	MyClient.FindRemoteServers(systemIp)
+	go MyClient.FindRemoteServers(systemIp, serversChannel)
 
-	option := MyClient.ChooseServer()
+	// push all online remote server into channel, then read it out here and display on cli
+	for _, server := range <-serversChannel {
+		fmt.Println(server)
+	}
 
-	MyClient.ConnectToServer(option)
+	// option := MyClient.ChooseServer()
+
+	// MyClient.ConnectToServer(option)
 }

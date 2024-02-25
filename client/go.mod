@@ -8,4 +8,7 @@ require (
 	golang.org/x/net v0.0.0-20210316092652-d523dce5a7f4 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20210315160823-c6e025ad8005 // indirect
+	local.com/ClientServerCommunication v0.0.0-00010101000000-000000000000
 )
+
+replace local.com/ClientServerCommunication => ../clientServerCommunication

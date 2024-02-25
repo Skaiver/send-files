@@ -8,6 +8,9 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"local.com/ClientServerCommunication"
+
 )
 
 const (
@@ -21,36 +24,34 @@ func ChooseServer() string {
 	return input.Text()
 }
 
-func FindRemoteServers(systemIp net.IP) [5]string {
-	var availableHosts [5]string
-	// cidrAdress := getCIDRAdress()
-	counter := 0
-
+func FindRemoteServers(systemIp net.IP, c chan<- string) {
 	fmt.Println("should be going over hosts:")
-
 	ip := systemIp
 
-	// Iterate over IP addresses in the subnet
+	// iterate over IP addresses in the subnet
 	for i := 0; i < 255; i++ {
 		if i == 0 {
-			ip = getStartingIp(ip)
+			// get first actual device ip in subnet e.g. 192.168.17.1/36 -> only last octet is host part
+			ip = getStartingIP(ip)
 		} else {
-			ip = incIP(ip)
+			// increment ip to e.g. 192.168.17.2/36
+			ip = incrementIP(ip)
 		}
 		// fmt.Println("testing now: ", ip)
 
-		// Send ICMP Echo request (ping)
+		// send ping
 		connectAttempt := raw_connect(ip.String(), PORT)
 
 		if connectAttempt {
-			if testIfServerIsAvailableHost(ip.String()) {
+			if ClientServerCommunication.IsServerValidRemote(ip.String(), PORT) {
 				fmt.Println("Host found:", ip.String())
-				availableHosts[counter] = ip.String()
+
+				// send available remote server ip to buffered channel
+				c <- ip.String()
+				fmt.Println(ip.String())
 			}
 		}
-
 	}
-	return availableHosts
 }
 
 func testIfServerIsAvailableHost(ip string) bool {
@@ -228,14 +229,14 @@ func parseCIDR(cidr string) (*net.IPNet, error) {
 }
 
 // IncrementIP increments an IP address.
-func incIP(ip net.IP) net.IP {
+func incrementIP(ip net.IP) net.IP {
 	ipTo4 := ip.To4()
 	ipTo4[3]++
 
 	return net.ParseIP(ipTo4.String())
 }
 
-func getStartingIp(ip net.IP) net.IP {
+func getStartingIP(ip net.IP) net.IP {
 	ipTo4 := ip.To4()
 	ipTo4[3] = 0
 
