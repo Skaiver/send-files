@@ -9,6 +9,8 @@ import (
 func main() {
 	systemIp := MyClient.GetOutboundIP()
 
+	fmt.Println(systemIp)
+
 	// identify hosts in network
 	// server := listAvailableServers(systemIp)
 
@@ -18,11 +20,12 @@ func main() {
 	go MyClient.FindRemoteServers(systemIp, serversChannel)
 
 	// push all online remote server into channel, then read it out here and display on cli
-	for _, server := range <-serversChannel {
+	fmt.Println("Following server found: ")
+	for server := range serversChannel {
 		fmt.Println(server)
 	}
 
-	// option := MyClient.ChooseServer()
+	option := MyClient.ChooseServer()
 
-	// MyClient.ConnectToServer(option)
+	go MyClient.ConnectToServer(option)
 }

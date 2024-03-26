@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"local.com/ClientServerCommunication"
-
 )
 
 const (
@@ -44,11 +43,11 @@ func FindRemoteServers(systemIp net.IP, c chan<- string) {
 
 		if connectAttempt {
 			if ClientServerCommunication.IsServerValidRemote(ip.String(), PORT) {
-				fmt.Println("Host found:", ip.String())
+				//fmt.Println("Host found:", ip.String())
 
 				// send available remote server ip to buffered channel
 				c <- ip.String()
-				fmt.Println(ip.String())
+				// fmt.Println(ip.String())
 			}
 		}
 	}
